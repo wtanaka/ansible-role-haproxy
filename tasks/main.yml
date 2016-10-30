@@ -1,0 +1,66 @@
+---
+- include: compat.yml
+
+- include: include_vars.yml
+
+- include: epel.yml
+  when: ansible_distribution == 'CentOS'
+
+- include: Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include: RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: install_package_names.yml
+
+- name: query haproxy version
+  changed_when: false
+  command: "{{haproxy_binary}} -v"
+  register: haproxy_version_result
+
+- name: set_fact for haproxy_version
+  set_fact:
+    haproxy_version: >-
+      {{ '1.6' if 'version 1.6' in haproxy_version_result.stdout else
+         '1.5' if 'version 1.5' in haproxy_version_result.stdout else
+         '1.4' if 'version 1.4' in haproxy_version_result.stdout else
+         'unknown' }}
+
+- name: Ensure /var/run/haproxy exists
+  file: >
+    path=/var/run/haproxy state=directory owner=haproxy group=haproxy
+    mode=2775
+  sudo: yes
+
+- name: Install haproxy.cfg
+  template: >
+    src=haproxy.cfg.j2 dest=/etc/haproxy/haproxy.cfg mode=0644
+    validate='haproxy -f %s -c -q'
+  notify: restart haproxy
+  sudo: yes
+
+- name: Ensure HAProxy is started
+  service: name=haproxy state=started
+  sudo: yes
+  when: not (is_integration_test is defined and is_integration_test and
+      ansible_os_family == "RedHat")
+  register: start_result
+  changed_when: >
+    start_result is defined and start_result.changed and
+    ansible_os_family != "Debian"
+
+- name: Ensure HAProxy is started and enabled
+  service: name=haproxy state=started enabled=yes
+  sudo: yes
+  when: not (is_integration_test is defined and is_integration_test and
+      (ansible_os_family == "RedHat" or
+       (ansible_distribution == "Debian" and
+        ansible_distribution_major_version == "8") or
+       (ansible_distribution == "Ubuntu" and
+        ansible_distribution_major_version == "16")
+      ))
+  register: service_result
+  changed_when: >
+    service_result is defined and service_result.changed and
+    ansible_os_family != "Debian"

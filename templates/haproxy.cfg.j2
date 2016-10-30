@@ -1,0 +1,86 @@
+global
+        log /dev/log    local0
+        log /dev/log    local1 notice
+        chroot {{haproxy_chroot}}
+        stats socket /run/haproxy/admin.sock mode 660 level admin
+        stats timeout 30s
+        user {{haproxy_user}}
+        group {{haproxy_group}}
+        daemon
+
+{% if haproxy_version != '1.4' %}
+        # Default SSL material locations (new in 1.5)
+        ca-base /etc/ssl/certs
+        crt-base /etc/ssl/private
+{% endif %}
+
+{% if haproxy_version != '1.4' and haproxy_version != '1.5' %}
+        # Default ciphers to use on SSL-enabled listening sockets.
+        # (new in 1.6)
+        # For more information, see ciphers(1SSL). This list is from:
+        #  https://hynek.me/articles/hardening-your-web-servers-ssl-ciphers/
+        ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
+        ssl-default-bind-options no-sslv3
+{% endif %}
+
+{% for line in haproxy_global_extra %}
+        {{ line }}
+{% endfor %}
+
+defaults
+        log             global
+        mode            http
+        option          httplog
+        option          dontlognull
+{% if haproxy_version == '1.4' %}
+        contimeout 5000
+        clitimeout 50000
+        srvtimeout 50000
+{% else %}
+        timeout connect 5000
+        timeout client  50000
+        timeout server  50000
+{% endif %}
+{% if ansible_os_family == 'Debian' %}
+        errorfile 400 /etc/haproxy/errors/400.http
+        errorfile 403 /etc/haproxy/errors/403.http
+        errorfile 408 /etc/haproxy/errors/408.http
+        errorfile 500 /etc/haproxy/errors/500.http
+        errorfile 502 /etc/haproxy/errors/502.http
+        errorfile 503 /etc/haproxy/errors/503.http
+        errorfile 504 /etc/haproxy/errors/504.http
+{% endif %}
+{% for line in haproxy_defaults_extra %}
+        {{line}}
+{% endfor %}
+
+{% for frontend in haproxy_frontends %}
+frontend {{frontend.name}}
+{% for line in frontend.lines %}
+        {{line}}
+{% endfor %}
+{% endfor %}
+
+{% for backend in haproxy_backends %}
+backend {{backend.name}}
+{% for line in backend.lines %}
+        {{line}}
+{% endfor %}
+{% endfor %}
+
+{% if not haproxy_listens and haproxy_version == '1.4' %}
+listen  appli1-rewrite 0.0.0.0:10001
+        cookie  SERVERID rewrite
+        balance roundrobin
+        server  app1_1 192.168.34.23:8080 cookie app1inst1 check inter 2000 rise 2 fall 5
+        server  app1_2 192.168.34.32:8080 cookie app1inst2 check inter 2000 rise 2 fall 5
+        server  app1_3 192.168.34.27:8080 cookie app1inst3 check inter 2000 rise 2 fall 5
+        server  app1_4 192.168.34.42:8080 cookie app1inst4 check inter 2000 rise 2 fall 5
+{% endif %}
+
+{% for listen in haproxy_listens %}
+listen {{listen.name}}
+{% for line in listen.lines %}
+        {{line}}
+{% endfor %}
+{% endfor %}

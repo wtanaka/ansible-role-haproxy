@@ -1,0 +1,4 @@
+---
+haproxy_binary: /usr/sbin/haproxy
+package_names:
+- haproxy

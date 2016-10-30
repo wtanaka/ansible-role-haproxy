@@ -1,0 +1,29 @@
+---
+# Example of haproxy_backends:
+# haproxy_frontends:
+# - name: http
+#   lines:
+#   - mode http
+#   - bind :80
+#   - default_backend http_cluster
+# - name: secure
+#   lines:
+#   - mode tcp
+#   - bind :443 ssl crt ./certs/cert.pem npn spdy/2
+#   - use_backend spdy_cluster if { ssl_npn -i spdy/2 }
+#   - default_backend http_cluster
+# haproxy_backends:
+# - name: spdy_cluster
+#   lines:
+#   - server srv01 127.0.0.1:10000
+# - name: http_cluster
+#   lines:
+#   - server srv01 127.0.0.1:8000
+haproxy_backends: []
+haproxy_chroot: /var/lib/haproxy
+haproxy_defaults_extra: [] # Extra lines for "defaults" section
+haproxy_frontends: []
+haproxy_global_extra: [] # Extra lines for "global" section
+haproxy_group: haproxy
+haproxy_listens: []
+haproxy_user: haproxy
