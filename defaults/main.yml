@@ -24,6 +24,9 @@ haproxy_chroot: /var/lib/haproxy
 haproxy_defaults_extra: [] # Extra lines for "defaults" section
 haproxy_frontends: []
 haproxy_global_extra: [] # Extra lines for "global" section
+haproxy_global_logging:
+  - log /dev/log    local0
+  - log /dev/log    local1 notice
 haproxy_group: haproxy
 haproxy_listens: []
 haproxy_user: haproxy
