@@ -27,9 +27,9 @@
          '1.4' if 'version 1.4' in haproxy_version_result.stdout else
          'unknown' }}
 
-- name: Ensure /var/run/haproxy exists
+- name: Ensure {{ haproxy_stats_socket_path }} exists
   file: >
-    path=/var/run/haproxy state=directory owner=haproxy group=haproxy
+    path="{{ haproxy_stats_socket_path }}" state=directory owner=haproxy group=haproxy
     mode=2775
   sudo: yes
 

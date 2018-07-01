@@ -3,7 +3,7 @@ global
         {{ line }}
 {% endfor %}
         chroot {{haproxy_chroot}}
-        stats socket /run/haproxy/admin.sock mode 660 level admin
+        stats socket {{ haproxy_stats_socket_path }}/admin.sock mode 660 level admin
         stats timeout 30s
         user {{haproxy_user}}
         group {{haproxy_group}}
