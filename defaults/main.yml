@@ -30,4 +30,4 @@ haproxy_global_logging:
 haproxy_group: haproxy
 haproxy_listens: []
 haproxy_user: haproxy
-haproxy_stats_socket_path: /run/haproxy/admin.sock
+haproxy_stats_socket_path: /run/haproxy/
